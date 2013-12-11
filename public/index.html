@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html ng-app="app">
+  <head ng-controller="controller">
+    <title>{{state}} ~ CAH</title>
+    <title>Cookies Among Humans</title>
+    <link rel="stylesheet" href="/lib/bootstrap.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/css/bootstrap.css">
+    <link rel="stylesheet" href="app.css">
+    <link rel="stylesheet" href="decks.css">
+  </head>
+  
+  <body ng-controller="controller">
+    <div class="overlay"></div>
+    <div class="window">
+      <div class="container-fluid">
+        
+        <h2>Cookies Among Humans</h2>
+        <p class="lead">A party game for really bored people.</p>
+        <input type="text" ng-model="name" ng-change="updateName()" placeholder="What's your name?">
+        <br>
+        <a href="#" class="button" onclick="$('body').addClass('game')"> 
+          Let's Go!
+        </a>
+        <div class="loading">
+          Currently {{state}}
+          <div class="loader"></div>
+          <div class="loader"></div>
+          <div class="loader"></div>
+          <div class="loader"></div>
+        </div>
+      </div>
+    </div>
+
+    <nav>
+      <div class="container-fluid">
+        <div class="pull-left">
+          <h1><a href="#">Cookies Among Humans</a></h1>
+          <span class="status">Currently <strong>{{state}}</strong></span> - 
+          <a href="http://s3.amazonaws.com/cah/CAH_Rules.pdf" target="_blank">Rules</a>
+          -
+          <span class="last-played-link popout-container">
+            <a>Last Played</a>
+            <div class="last-played popout">
+              <h3>Last Played <a href="https://twitter.com/intent/tweet?text={{last.blackcard}}+{{last.whitecard}}&tw_p=tweetbutton&hashtags=cah&via=lablayers" target="_blank" class="pull-right tweetit">Tweet It!</a></h3>
+              <div class="card black {{deck(last.blackcard)}}">
+                <p>
+                  {{last.blackcard}} 
+                </p>
+                <div class="deck">
+                  <b>{{deck(last.blackcard)}}</b>
+                </div>
+                <span class="by">Judged by {{last.judge.name}}</span>
+              </div>
+              <div class="card white {{deck(last.whitecard)}}">
+                <p>
+                  {{last.whitecard}} 
+                </p>
+                <div class="deck">
+                  <b>{{deck(last.whitecard)}}</b>
+                </div>
+                <span class="by">Played by {{last.winner.name}}</span>
+              </div>
+            </div>
+          </span>
+          -
+          <span class="popout-container">
+            <a>Change Name</a>
+            <div class="popout">
+                Hi, my name is &nbsp;
+                <input type="text" ng-model="name" ng-change="updateName()" placeholder="Name" class="pull-right" autofocus>
+            </div>
+          </span>
+        </div>
+        <div class="players pull-right">
+          <div ng-repeat="player in players" class="player">
+            <div class="name">
+              {{player.name}}
+              <div class="status">
+                <span ng-show="player.me" class="label label-inverse">You</span>
+                <span ng-show="player.judge" class="label label-info">Card Czar</span>
+                <span ng-show="player.played" class="label label-success">Played</span>
+              </div>
+            </div>
+            
+            <div class="score">{{player.score}}</div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="data" style="display: none">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        
+        <tbody>
+          <tr ng-repeat="player in players">
+            <td>
+              {{player.name}}
+              <span class="pull-right">
+                <span ng-show="player.me" class="label label-inverse">You</span>
+                <span ng-show="player.judge" class="label label-info">Card Czar</span>
+                <span ng-show="player.played" class="label label-success">Played</span>
+              </span>
+            </td>
+            
+            <td>{{player.score}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="container-fluid text-center">
+        <div ng-show="waiting" class="waiting">
+          <h4>Waiting for Players...</h4>
+          <div class="loading">
+            <div class="loader"></div>
+            <div class="loader"></div>
+            <div class="loader"></div>
+            <div class="loader"></div>
+          </div>
+
+        </div>
+
+        <div class="last-played stowaway {{state}}">
+          <div class="card black {{deck(last.blackcard)}}">
+            <p>
+              {{last.blackcard}} 
+            </p>
+            <div class="deck">
+              <b>{{deck(last.blackcard)}}</b>
+            </div>
+            <span class="by">Judged by {{last.judge.name}}</span>
+          </div>
+          <div class="card white {{deck(last.whitecard)}}">
+            <p>
+              {{last.whitecard}} 
+            </p>
+            <div class="deck">
+              <b>{{deck(last.whitecard)}}</b>
+            </div>
+            <span class="by">Played by {{last.winner.name}}</span>
+          </div>
+        </div>
+
+        <div ng-hide="waiting" class="judging">
+              <div class="card black {{deck(blackcard)}}">
+                <p>
+                  {{blackcard}}
+                </p>
+                <p>{{deck(card)}}</p>
+                <div class="deck">
+                  <b>{{deck(blackcard)}}</b>
+                </div>
+              </div>
+
+            <div ng-show="judging" class="stage">
+              <div ng-repeat="card in cards">
+                <div ng-switch="judge">
+                  <div ng-switch-when="true">
+                      <a ng-click="pick(card)" class="card white {{deck(card)}}">
+                        <p>
+                          {{card}}
+                        </p>
+                        <div class="deck">
+                          <b>{{deck(card)}}</b>
+                        </div>
+                      </a>
+                  </div>
+                  <div ng-switch-when="false">
+                      <div class="card white disabled {{deck(card)}}">
+                        <p>
+                          {{card}}
+                        </p>
+                        <div class="deck">
+                          <b>{{deck(card)}}</b>
+                        </div>
+                      </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+
+        
+        <div class="row-fluid">
+          <h4>Your hand</h4>
+          <div class="hand">
+            <div ng-repeat="card in hand" class="card-holder">
+              <div ng-switch="canplay">
+                <div ng-switch-when="true">
+                    <a ng-click="play(card)" class="card white {{deck(card)}}">
+                      <p>
+                        {{card}}
+                      </p>
+                      <div class="deck">
+                        <b>{{deck(card)}}</b>
+                      </div>
+                    </a>
+                </div>
+                <div ng-switch-when="false">
+                    <div class="card white disabled {{deck(card)}}">
+                      <p>
+                        {{card}}
+                      </p>
+                      <div class="deck">
+                        <b>{{deck(card)}}</b>
+                      </div>
+                    </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      
+      <footer>
+        <div class="container-fluid">
+          A Cards Against Humanity clone. Licensed under CC BY-NC-SA 2.0. Find me on GitHub! BTC: 1KMrDr1fwVDnvhewR65unRYoVryTs6oHki
+        </div>
+      </footer>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.6/angular.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/1.2.1/lodash.compat.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.10/socket.io.min.js"></script>
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/angular.min.js"></script>
+    <script src="/lib/lodash.min.js"></script>
+    <script src="/lib/bootstrap.min.js"></script>
+    <script src="/lib/socketio.min.js"></script>
+    <!--
+    <script src="app.js"></script>
+    <script src="socket.js"></script>
+    <script src="cards.js"></script>
+    -->
+    <script src="https://gist.githubusercontent.com/LabLayers/c451a662b05b16d5b3b9/raw/9d50a2453cc0165a20dfc9dc743155021b3b5bdc/app.min.js"></script>
+    <script src="app.min.js"></script>
+  </body>
+</html>
